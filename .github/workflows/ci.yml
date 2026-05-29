@@ -7,6 +7,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -17,3 +20,13 @@ jobs:
 
       - run: cd services/user-service && npm ci
       - run: cd services/user-service && npm run build
+
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}/user-service:${{ github.sha }} ./services/user-service
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image to GHCR
+        run: docker push ghcr.io/${{ github.repository }}/user-service:${{ github.sha }}
